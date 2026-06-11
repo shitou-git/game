@@ -931,16 +931,19 @@ function render(){
     html+=`<div class="action-row">`;
     if(canSelfHu) html+=`<button class="btn btn-danger" onclick="humanSelfHu()">自摸</button>`;
     if(canHiddenGang) html+=`<button class="btn btn-info" onclick="humanHiddenGang()">暗杠</button>`;
-    if(selectedTileId) html+=`<button class="btn btn-primary" onclick="humanDiscard('${selectedTileId}')">打出</button>`;
     html+=`</div>`;
   }
   html+=`</div></div>`;
 
   // 玩家手牌(底部) - 外层加 position:relative 用于悬浮定位
   html+=`<div style="grid-column:1/4;grid-row:3;display:flex;justify-content:center;align-items:center;position:relative">`;
-  // "你的回合"悬浮提示 - position:absolute 悬浮在手牌区上方中央，不占布局位置
+  // 悬浮提示 - 选中牌时显示"打出"按钮，否则显示"你的回合"
   if(phase==='playing'&&isHumanTurn&&!state.needsDraw){
-    html+=`<div style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);z-index:50;background:linear-gradient(90deg,#27ae60,#2ecc71);color:#fff;padding:4px 18px;border-radius:8px;font-weight:bold;font-size:13px;box-shadow:0 2px 10px rgba(0,0,0,.3);white-space:nowrap">你的回合</div>`;
+    if(selectedTileId){
+      html+=`<div onclick="humanDiscard('${selectedTileId}')" style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);z-index:50;background:linear-gradient(90deg,#e67e22,#f39c12);color:#fff;padding:4px 18px;border-radius:8px;font-weight:bold;font-size:13px;box-shadow:0 2px 10px rgba(0,0,0,.3);white-space:nowrap;cursor:pointer">打出 ${tileLabel(p.hand.find(t=>t.id===selectedTileId))}</div>`;
+    }else{
+      html+=`<div style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);z-index:50;background:linear-gradient(90deg,#27ae60,#2ecc71);color:#fff;padding:4px 18px;border-radius:8px;font-weight:bold;font-size:13px;box-shadow:0 2px 10px rgba(0,0,0,.3);white-space:nowrap">你的回合</div>`;
+    }
   }
   html+=`<div class="player-panel${currentIdx===0&&phase==='playing'?' current':''}" style="min-width:600px;position:relative">
     <div class="player-name">${p.name}${p.isDealer?'<span class="dealer-tag">庄</span>':''} <span class="score">${p.score}分</span> <span class="stat">手牌:${p.hand.length}</span></div>
