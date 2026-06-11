@@ -915,9 +915,6 @@ function render(){
 
   // 操作按钮区域（吃碰杠/自摸暗杠/出牌）
   if(phase==='claiming'){
-    html+=`<div style="font-size:14px;font-weight:bold;color:#333;margin-bottom:10px">
-      ${lastDiscarder===0?'你':'其他玩家'}打出了 ${lastDiscard?tileLabel(lastDiscard):''}，请选择操作：
-    </div>`;
     html+=`<div class="action-row">`;
     if(canCLaimHu) html+=`<button class="btn btn-danger" onclick="humanClaimHu()">胡牌</button>`;
     if(canClaimGang) html+=`<button class="btn btn-info" onclick="humanClaimGang()">杠</button>`;
