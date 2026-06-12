@@ -84,7 +84,7 @@ body{min-height:100vh;background:linear-gradient(135deg,#1a3a1a 0%,#0d1f0d 100%)
 }
 .footer{position:fixed;bottom:10px;right:20px;color:rgba(255,255,255,.4);font-size:12px;font-style:italic}
 /* 悬浮提示 - 定位到弃牌区域上方 */
-.floating-toast{position:fixed;top:290px;left:50%;transform:translateX(-50%);z-index:200;background:rgba(0,0,0,.85);color:#fff;padding:10px 20px;border-radius:10px;font-size:12px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.4);animation:fadeIn .3s;min-width:280px}
+.floating-toast{position:fixed;top:250px;left:50%;transform:translateX(-50%);z-index:200;background:rgba(0,0,0,.85);color:#fff;padding:10px 20px;border-radius:10px;font-size:12px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.4);animation:fadeIn .3s;min-width:280px}
 .floating-toast h3{font-size:16px;margin-bottom:4px}
 .floating-toast .hu-pattern{font-size:14px;color:#f39c12;margin:4px 0}
 .floating-toast .hu-fan{font-size:18px;color:#e74c3c;font-weight:bold}
@@ -116,7 +116,7 @@ body{min-height:100vh;background:linear-gradient(135deg,#1a3a1a 0%,#0d1f0d 100%)
   min-width:200px;box-shadow:0 2px 10px rgba(0,0,0,.2);
   display:flex;flex-direction:column;min-height:140px;
 }
-.player-panel.side{width:100%;max-width:220px;min-height:360px}
+.player-panel.side{width:100%;max-width:220px;min-height:180px}
 .player-panel.current{border:2px solid #f0c040;box-shadow:0 0 15px rgba(240,192,64,.4)}
 .player-name{font-weight:bold;font-size:13px;color:#333;margin-bottom:4px;display:flex;align-items:center;gap:6px}
 .score{color:#888;font-size:11px}
@@ -137,7 +137,7 @@ body{min-height:100vh;background:linear-gradient(135deg,#1a3a1a 0%,#0d1f0d 100%)
 
 /* 手牌区域 */
 .hand{display:flex;flex-wrap:wrap;gap:3px;justify-content:center;margin-top:auto;min-height:80px;align-items:center}
-.side-hand{display:grid;grid-template-columns:repeat(5,1fr);gap:2px 1px;justify-items:center;min-height:300px}
+.side-hand{display:grid;grid-template-columns:repeat(5,1fr);gap:2px 1px;justify-items:center;min-height:130px}
 .side-hand .tile-back{width:calc(var(--tile-width)*0.75);height:calc(var(--tile-height)*0.75)}
 .btn{display:inline-block;padding:8px 16px;border:none;border-radius:6px;cursor:pointer;font-size:14px;font-weight:600;transition:all .15s}
 .btn:active{transform:scale(.96)}
@@ -888,12 +888,11 @@ function render(){
   // 上方玩家(南家)
   const p2=players[2];
   html+=`<div style="grid-column:2;grid-row:1;display:flex;justify-content:center;align-items:flex-start">
-    <div class="player-panel${currentIdx===2&&phase==='playing'?' current':''}">
+    <div class="player-panel${currentIdx===2&&phase==='playing'?' current':''}" style="min-width:500px">
       <div class="player-name">${p2.name}${p2.isDealer?'<span class="dealer-tag">庄</span>':''} <span class="score">${p2.score}分</span></div>
       <div class="meld-area">
         ${p2.melds.length?p2.melds.map(m=>`<span class="meld-group">${m.tiles.map(t=>tileFaceHTML(t,false,true)).join('')}<span>${m.type==='chi'?'吃':m.type==='peng'?'碰':'杠'}</span></span>`).join(''):''}
-      </div>
-      <div class="hand">${isEnded?p2.hand.map(t=>`<span class="${t.id===huTileId?'hu-tile-enlarge':''}">${tileFaceHTML(t,false,true)}</span>`).join(''):p2.hand.map(()=>tileBackHTML(true)).join('')}</div>
+      </div><div class="hand" style="min-width:480px">${isEnded?p2.hand.map(t=>`<span class="${t.id===huTileId?'hu-tile-enlarge':''}">${tileFaceHTML(t,false,true)}</span>`).join(''):p2.hand.map(()=>tileBackHTML(true)).join('')}</div>
     </div>
   </div>`;
 
