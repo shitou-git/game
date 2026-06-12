@@ -12,8 +12,8 @@ body{min-height:100vh;background:linear-gradient(135deg,#1a3a1a 0%,#0d1f0d 100%)
 :root{
   --tile-width: 48px;    /* 牌的宽度 */
   --tile-height: 64px;   /* 牌的高度 */
-  --tile-font-size: 18px;/* 牌面字体大小 */
-  --tile-sub-font: 13px; /* 牌面小字大小（万/条/筒）*/
+  --tile-font-size: 19px;/* 牌面字体大小 */
+  --tile-sub-font: 14px; /* 牌面小字大小（万/条/筒）*/
   --tile-border-radius: 7px; /* 牌角圆角 */
   --tile-back-icon: 28px;/* 牌背图标大小 */
 }
@@ -116,7 +116,7 @@ body{min-height:100vh;background:linear-gradient(135deg,#1a3a1a 0%,#0d1f0d 100%)
   min-width:200px;
   display:flex;flex-direction:column;min-height:140px;
 }
-.player-panel.side{width:100%;max-width:220px;min-height:160px}
+.player-panel.side{width:100%;max-width:220px;min-height:180px}
 .player-panel.current{border:2px solid #f0c040;box-shadow:0 0 15px rgba(240,192,64,.4)}
 .player-name{font-weight:bold;font-size:13px;color:#f0e8d0;margin-bottom:4px;display:flex;align-items:center;gap:6px}
 .score{color:#c0b8a0;font-size:11px}
@@ -137,7 +137,7 @@ body{min-height:100vh;background:linear-gradient(135deg,#1a3a1a 0%,#0d1f0d 100%)
 
 /* 手牌区域 */
 .hand{display:flex;flex-wrap:wrap;gap:3px;justify-content:center;margin-top:auto;min-height:80px;align-items:center}
-.side-hand{display:grid;grid-template-columns:repeat(5,1fr);gap:2px 1px;justify-items:center;min-height:120px}
+.side-hand{display:grid;grid-template-columns:repeat(5,1fr);gap:2px 1px;justify-items:center;min-height:130px}
 .side-hand .tile-back{width:calc(var(--tile-width)*0.75);height:calc(var(--tile-height)*0.75)}
 .btn{display:inline-block;padding:8px 16px;border:none;border-radius:6px;cursor:pointer;font-size:14px;font-weight:600;transition:all .15s}
 .btn:active{transform:scale(.96)}
@@ -181,7 +181,7 @@ body{min-height:100vh;background:linear-gradient(135deg,#1a3a1a 0%,#0d1f0d 100%)
 <body>
 
 <div id="app" style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:10px"></div>
-<div class="footer">@雪白梅</div>
+<div class="footer">@Stone</div>
 
 <script>
 'use strict';
@@ -321,40 +321,124 @@ function countFan(hand,melds,selfDraw,analysis,newTile){
   const allTiles=newTile?[...hand,newTile]:[...hand];
   const entries=[];
   let fan=0;
-  const suits=new Set(allTiles.filter(t=>t.suit==='wan'||t.suit==='tiao'||t.suit==='tong').map(t=>t.suit));
-  const hasHonor=allTiles.some(t=>t.suit==='feng'||t.suit==='jian');
-  const hasTerminal=allTiles.some(t=>t.value===1||t.value===9||t.suit==='feng'||t.suit==='jian');
-  const allMeldsNumber=melds.every(m=>m.tiles.every(t=>t.suit==='wan'||t.suit==='tiao'||t.suit==='tong'));
+  const suits=new Set(allTiles.filter(t=>['wan','tiao','tong'].includes(t.suit)).map(t=>t.suit));
+  const honorTiles=allTiles.filter(t=>['feng','jian'].includes(t.suit));
+  const suitTiles=allTiles.filter(t=>['wan','tiao','tong'].includes(t.suit));
   const hasChi=melds.some(m=>m.type==='chi');
-
+  const allTriplets=melds.every(m=>m.type==='peng'||m.type==='gang');
+  const onlyHonors=suitTiles.length===0&&honorTiles.length>0;
+  const onlyOneSuit=suits.size===1&&suitTiles.length>0&&honorTiles.length===0;
+  const mixedOneSuit=suits.size===1&&honorTiles.length>0;
+  
+  // 七对（独立番型，不与其他叠加）
   if(analysis.isSevenPairs&&!hasChi){
-    entries.push({name:'七对',fan:2});fan+=2;
+    return {fan:1,entries:[{name:'七对',fan:1}],patternName:'七对'};
   }
-  const allTriplets=meld=>meld.type==='peng'||meld.type==='gang';
-  if(melds.every(allTriplets)&&!hasChi){
-    const decomp=analysis.decompositions||[];
-    if(decomp.length>0&&decomp[0].groups.every(g=>g.every(t=>sameTile(t,g[0])))){
-      entries.push({name:'碰碰胡',fan:2});fan+=2;
+  
+  // 十三幺（独立番型）
+  if(analysis.isThirteenOrphans){
+    return {fan:9,entries:[{name:'十三幺',fan:9}],patternName:'十三幺'};
+  }
+  
+  // 大三元（字一色条件满足时才可能）
+  if(onlyHonors){
+    const faceTiles=honorTiles.filter(t=>['jian'].includes(t.suit)||(t.suit==='feng'&&!['dong','nan','xi','bei'].includes(t.value)));
+    const faCount=honorTiles.filter(t=>t.suit==='jian'&&t.value===1).length;
+    const baCount=honorTiles.filter(t=>t.suit==='jian'&&t.value===2).length;
+    const zhongCount=honorTiles.filter(t=>t.suit==='jian'&&t.value===3).length;
+    if(faCount>=3&&baCount>=3&&zhongCount>=3){
+      return {fan:9,entries:[{name:'大三元',fan:9}],patternName:'大三元'};
     }
   }
-  if(suits.size===1&&hasHonor){
-    entries.push({name:'混一色',fan:2});fan+=2;
+  
+  // 大四喜
+  if(onlyHonors){
+    const dCount=honorTiles.filter(t=>t.suit==='feng'&&t.value==='dong').length;
+    const nCount=honorTiles.filter(t=>t.suit==='feng'&&t.value==='nan').length;
+    const xCount=honorTiles.filter(t=>t.suit==='feng'&&t.value==='xi').length;
+    const bCount=honorTiles.filter(t=>t.suit==='feng'&&t.value==='bei').length;
+    if(dCount>=3&&nCount>=3&&xCount>=3&&bCount>=3){
+      return {fan:9,entries:[{name:'大四喜',fan:9}],patternName:'大四喜'};
+    }
   }
-  if(suits.size===1&&!hasHonor&&allMeldsNumber){
-    entries.push({name:'清一色',fan:6});fan+=6;
+  
+  // 字一色（全部是字牌）
+  if(onlyHonors){
+    return {fan:8,entries:[{name:'字一色',fan:8}],patternName:'字一色'};
   }
-  if(!hasTerminal&&suits.size>0){
-    entries.push({name:'断幺九',fan:1});fan+=1;
+  
+  // 小三元（字牌中有两种且每种至少2张）
+  if(onlyHonors){
+    const faCount=honorTiles.filter(t=>t.suit==='jian'&&t.value===1).length;
+    const baCount=honorTiles.filter(t=>t.suit==='jian'&&t.value===2).length;
+    const zhongCount=honorTiles.filter(t=>t.suit==='jian'&&t.value===3).length;
+    const typesWith2=[faCount>=2,baCount>=2,zhongCount>=2].filter(Boolean).length;
+    if(typesWith2>=2){
+      return {fan:7,entries:[{name:'小三元',fan:7}],patternName:'小三元'};
+    }
   }
-  if(allTiles.every(t=>t.suit==='feng'||t.suit==='jian')){
-    entries.push({name:'字一色',fan:8});fan+=8;
+  
+  // 小四喜（风牌中有三种且每种至少2张）
+  if(onlyHonors){
+    const dCount=honorTiles.filter(t=>t.suit==='feng'&&t.value==='dong').length;
+    const nCount=honorTiles.filter(t=>t.suit==='feng'&&t.value==='nan').length;
+    const xCount=honorTiles.filter(t=>t.suit==='feng'&&t.value==='xi').length;
+    const bCount=honorTiles.filter(t=>t.suit==='feng'&&t.value==='bei').length;
+    const typesWith2=[dCount>=2,nCount>=2,xCount>=2,bCount>=2].filter(Boolean).length;
+    if(typesWith2>=3){
+      return {fan:7,entries:[{name:'小四喜',fan:7}],patternName:'小四喜'};
+    }
   }
-  if(selfDraw){
-    entries.push({name:'自摸',fan:1});fan+=1;
+  
+  // 清幺九（全是幺九且单一花色）
+  if(onlyOneSuit){
+    const yaoTiles=suitTiles.filter(t=>t.value===1||t.value===9);
+    if(yaoTiles.length===suitTiles.length){
+      return {fan:8,entries:[{name:'清幺九',fan:8}],patternName:'清幺九'};
+    }
   }
-  if(fan===0){
-    entries.push({name:'鸡胡',fan:1});fan=1;
+  
+  // 混幺九（有字牌+幺九）
+  if(mixedOneSuit||(onlyHonors&&honorTiles.length>=2)){
+    const yaoTiles=suitTiles.filter(t=>t.value===1||t.value===9);
+    if(yaoTiles.length>0&&yaoTiles.length===suitTiles.length&&honorTiles.length>0){
+      return {fan:6,entries:[{name:'混幺九',fan:6}],patternName:'混幺九'};
+    }
   }
+  
+  // 清碰（清一色+碰碰胡）
+  if(onlyOneSuit&&allTriplets&&!hasChi){
+    return {fan:6,entries:[{name:'清碰',fan:6}],patternName:'清碰'};
+  }
+  
+  // 清一色（单一花色无字牌）
+  if(onlyOneSuit){
+    return {fan:5,entries:[{name:'清一色',fan:5}],patternName:'清一色'};
+  }
+  
+  // 混碰（混一色+碰碰胡）
+  if(mixedOneSuit&&allTriplets&&!hasChi){
+    return {fan:5,entries:[{name:'混碰',fan:5}],patternName:'混碰'};
+  }
+  
+  // 混一色（单一花色+字牌）
+  if(mixedOneSuit){
+    return {fan:3,entries:[{name:'混一色',fan:3}],patternName:'混一色'};
+  }
+  
+  // 碰碰胡（全部刻子无顺子）
+  if(allTriplets&&!hasChi){
+    return {fan:3,entries:[{name:'碰碰胡',fan:3}],patternName:'碰碰胡'};
+  }
+  
+  // 平胡（全部顺子无刻子）
+  if(!hasChi&&!allTriplets&&suitTiles.length>0&&honorTiles.length===0){
+    return {fan:1,entries:[{name:'平胡',fan:1}],patternName:'平胡'};
+  }
+  
+  // 鸡胡（默认）
+  entries.push({name:'鸡胡',fan:0});
+  fan=0;
   return {fan,entries,patternName:entries.map(e=>e.name).join('+')};
 }
 
@@ -368,7 +452,7 @@ function tryHu(hand,melds,newTile,selfDraw){
   return {fan,entries,patternName,tiles:all,selfDraw};
 }
 
-function getScore(fan){return fan<=0?1:Math.pow(2,Math.min(fan,10)-1);}
+function getScore(fan){return fan<=0?1:Math.pow(2,Math.min(fan,5));}
 
 // ========== 吃/碰/杠判定 ==========
 function canPeng(hand,t){
@@ -616,10 +700,11 @@ function aiClaimPhase(){
       const r=tryHu(p.hand,p.melds,state.lastDiscard,false);
       if(r){
         const sc=getScore(r.fan);
-        p.score+=sc;p.hasWon=true;
-        state.players[discarderIdx].score-=sc;
+        const totalSc=sc*3; // 点炮胡，打出牌的人付三倍
+        p.score+=totalSc;p.hasWon=true;
+        state.players[discarderIdx].score-=totalSc;
         state.winnerIdx=target.playerId;state.huInfo=r;state.phase='ended';
-        state.log.push(`${PLAYER_NAMES[target.playerId]}胡牌！${r.patternName}（${r.fan}番）`);
+        state.log.push(`${PLAYER_NAMES[target.playerId]}胡牌！${r.patternName}（${r.fan}番）点炮包${PLAYER_NAMES[discarderIdx]}三倍`);
         render();return;
       }
     } else if(action==='gang'){
@@ -763,10 +848,11 @@ function humanClaimHu(){
   const r=tryHu(p.hand,p.melds,state.lastDiscard,false);
   if(!r) return;
   const sc=getScore(r.fan);
-  p.score+=sc;p.hasWon=true;
-  state.players[state.lastDiscarder].score-=sc;
+  const totalSc=sc*3; // 点炮胡，打出牌的人付三倍
+  p.score+=totalSc;p.hasWon=true;
+  state.players[state.lastDiscarder].score-=totalSc;
   state.winnerIdx=0;state.huInfo=r;state.phase='ended';
-  state.log.push(`你胡牌！${r.patternName}（${r.fan}番）得分${sc}`);
+  state.log.push(`你胡牌！${r.patternName}（${r.fan}番）点炮包${PLAYER_NAMES[state.lastDiscarder]}三倍${totalSc}分`);
   render();
 }
 
@@ -872,7 +958,7 @@ function render(){
   let huTile=null; // 胡的那张牌本身
   if(isEnded){
     huTileId=state.lastDiscard?state.lastDiscard.id:(state.lastDrawnTileId||null);
-  huTile=state.lastDiscard||null; // 点炮时为lastDiscard，自摸时为null（牌已在手牌中）
+    huTile=state.lastDiscard||null; // 点炮时为lastDiscard，自摸时为null（牌已在手牌中）
   }
 
   // 左玩家(北家) - 跨两行
@@ -885,19 +971,19 @@ function render(){
         ${p3.melds.length?p3.melds.map(m=>`<span class="meld-group">${m.tiles.map(t=>tileFaceHTML(t,false,true)).join('')}<span>${m.type==='chi'?'吃':m.type==='peng'?'碰':'杠'}</span></span>`).join(''):''}
       </div>
       <div class="hand side-hand">${p3HandHtml}</div>
-      </div>
+    </div>
   </div>`;
 
   // 上方玩家(南家)
   const p2=players[2];
   const p2HandHtml=isEnded?(p2.hand.map(t=>`<span class="${t.id===huTileId?'hu-tile-enlarge':''}">${tileFaceHTML(t,false,true)}</span>`).join('')+(winnerIdx===2&&huTile?`<span class="hu-tile-enlarge">${tileFaceHTML(huTile,false,true)}</span>`:'')):p2.hand.map(()=>tileBackHTML(true)).join('');
   html+=`<div style="grid-column:2;grid-row:1;display:flex;justify-content:center;align-items:flex-start">
-    <div class="player-panel${currentIdx===2&&phase==='playing'?' current':''}" style="min-width:460px">
+    <div class="player-panel${currentIdx===2&&phase==='playing'?' current':''}" style="min-width:500px">
       <div class="player-name">${p2.name}${p2.isDealer?'<span class="dealer-tag">庄</span>':''} <span class="score">${p2.score}分</span></div>
       <div class="meld-area">
         ${p2.melds.length?p2.melds.map(m=>`<span class="meld-group">${m.tiles.map(t=>tileFaceHTML(t,false,true)).join('')}<span>${m.type==='chi'?'吃':m.type==='peng'?'碰':'杠'}</span></span>`).join(''):''}
       </div>
-    <div class="hand" style="min-width:480px">${p2HandHtml}</div>
+      <div class="hand" style="min-width:480px">${p2HandHtml}</div>
     </div>
   </div>`;
 
