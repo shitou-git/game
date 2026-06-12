@@ -13,7 +13,7 @@ body{min-height:100vh;background:linear-gradient(135deg,#1a3a1a 0%,#0d1f0d 100%)
   --tile-width: 48px;    /* 牌的宽度 */
   --tile-height: 64px;   /* 牌的高度 */
   --tile-font-size: 16px;/* 牌面字体大小 */
-  --tile-sub-font: 11px; /* 牌面小字大小（万/条/筒）*/
+  --tile-sub-font: 13px; /* 牌面小字大小（万/条/筒）*/
   --tile-border-radius: 7px; /* 牌角圆角 */
   --tile-back-icon: 28px;/* 牌背图标大小 */
 }
@@ -84,14 +84,16 @@ body{min-height:100vh;background:linear-gradient(135deg,#1a3a1a 0%,#0d1f0d 100%)
 }
 .footer{position:fixed;bottom:10px;right:20px;color:rgba(255,255,255,.4);font-size:12px;font-style:italic}
 /* 悬浮提示 */
-.floating-toast{position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:200;background:rgba(0,0,0,.85);color:#fff;padding:12px 24px;border-radius:10px;font-size:14px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.4);animation:fadeIn .3s}
-.floating-toast h3{font-size:18px;margin-bottom:8px}
-.floating-toast .hu-pattern{font-size:16px;color:#f39c12;margin:4px 0}
-.floating-toast .hu-fan{font-size:20px;color:#e74c3c;font-weight:bold}
-.floating-toast .hu-detail{font-size:12px;color:#aaa;margin:6px 0}
-.floating-toast .hu-scores{font-size:12px;margin-top:8px}
+.floating-toast{position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:200;background:rgba(0,0,0,.85);color:#fff;padding:10px 28px;border-radius:10px;font-size:12px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.4);animation:fadeIn .3s;max-width:450px}
+.floating-toast h3{font-size:16px;margin-bottom:6px}
+.floating-toast .hu-tile{margin:8px 0}
+.floating-toast .hu-tile .tile-face{transform:scale(1.3);box-shadow:0 6px 20px rgba(240,192,64,.5)}
+.floating-toast .hu-pattern{font-size:14px;color:#f39c12;margin:4px 0}
+.floating-toast .hu-fan{font-size:18px;color:#e74c3c;font-weight:bold}
+.floating-toast .hu-detail{display:none}
+.floating-toast .hu-scores{font-size:11px;margin-top:6px}
 .floating-toast .hu-scores table{width:100%}
-.floating-toast .hu-scores td{padding:2px 8px}
+.floating-toast .hu-scores td{padding:2px 6px}
 @keyframes fadeIn{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
 .t-wan{color:#c0392b}.t-tiao{color:#27ae60}.t-tong{color:#2980b9}.t-feng{color:#2c3e50}.t-jian{color:#8e44ad}
 .sub{font-size:var(--tile-sub-font);margin-top:1px}
@@ -982,15 +984,20 @@ function render(){
   let toastHtml='';
   // 胡牌悬浮提示
   if(phase==='ended'&&huInfo){
+    // 获取胡牌的牌（点炮用lastDiscard，自摸用lastDrawnTileId找牌）
+    let huTile=state.lastDiscard;
+    if(!huTile&&state.lastDrawnTileId){
+      huTile=players[winnerIdx].hand.find(t=>t.id===state.lastDrawnTileId);
+    }
     toastHtml+=`<div class="floating-toast">
       <h3>🎉 ${players[winnerIdx].name} 胡牌！</h3>
+      ${huTile?`<div class="hu-tile">${tileFaceHTML(huTile,false,false)}</div>`:''}
       <div class="hu-pattern">${huInfo.patternName}</div>
       <div class="hu-fan">${huInfo.fan} 番</div>
-      <div class="hu-detail">${huInfo.entries.map(e=>e.name+': '+e.fan+'番').join(' | ')}</div>
       <div class="hu-scores"><table><tbody>`;
     players.forEach(pl=>{toastHtml+=`<tr><td>${pl.name}</td><td style="text-align:right">${pl.score}分</td></tr>`;});
     toastHtml+=`</tbody></table></div>
-      <button class="btn btn-primary" onclick="newGame()" style="margin-top:12px">再来一局</button>
+      <button class="btn btn-primary" onclick="newGame()" style="margin-top:8px">再来一局</button>
     </div>`;
   }
   // 流局悬浮提示
