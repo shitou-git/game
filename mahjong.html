@@ -115,7 +115,7 @@ body{min-height:100vh;background:linear-gradient(135deg,#1a3a1a 0%,#0d1f0d 100%)
 .player-panel{
   background:transparent;border:1px solid rgba(200,200,200,.8);border-radius:10px;padding:8px 12px;
   min-width:200px;
-  display:flex;flex-direction:column;min-height:140px;
+  display:flex;flex-direction:column;min-height:60px;
 }
 .player-panel.side{width:100%;max-width:220px;min-height:180px}
 .player-panel.current{border:2px solid #f0c040;box-shadow:0 0 15px rgba(240,192,64,.4)}
@@ -1112,13 +1112,13 @@ function render(){
   const p2=players[2];
   const p2HandHtml=isEnded?(p2.hand.map(t=>`<span class="${t.id===huTileId?'hu-tile-enlarge':''}">${tileFaceHTML(t,false,true)}</span>`).join('')+(winnerIdx===2&&huTile?`<span class="hu-tile-enlarge">${tileFaceHTML(huTile,false,true)}</span>`:'')):p2.hand.map(()=>tileBackHTML(true)).join('');
   html+=`<div style="grid-column:2;grid-row:1;display:flex;justify-content:center;align-items:flex-start;padding-top:4px">
-    <div class="player-panel${currentIdx===2&&phase==='playing'?' current':''}" style="min-width:600px;height:50px;padding:3px 5px;box-sizing:border-box;overflow:hidden">
-      <div class="player-name">${p2.name}${p2.isDealer?'<span class="dealer-tag">庄</span>':''} <span class="score">${p2.score}分</span></div>
+    html+=`<div style="grid-column:2;grid-row:1;display:flex;justify-content:center;align-items:flex-start;padding-top:6px">
+    <div class="player-panel${currentIdx===2&&phase==='playing'?' current':''}" style="width:520px;height:auto;padding:4px 10px;box-sizing:border-box">
       <div class="meld-area" style="min-height:12px;margin:2px 0">
         ${p2.melds.length?p2.melds.map(m=>`<span class="meld-group">${m.tiles.map(t=>tileFaceHTML(t,false,true)).join('')}<span>${m.type==='chi'?'吃':m.type==='peng'?'碰':'杠'}</span></span>`).join(''):''}
       </div>
-      <div class="hand" style="min-width:480px;margin-top:2px;min-height:60px;flex-wrap:nowrap;overflow:hidden">${p2HandHtml}</div> 
-      </div>
+      <div class="hand" style="width:500px;min-height:60px;flex-wrap:nowrap;overflow:hidden">${p2HandHtml}</div>  
+        </div>
   </div>`;
 
   // 右玩家(东家) - 跨两行
@@ -1135,7 +1135,7 @@ function render(){
   </div>`;
 
   // 中央区域
-  html+=`<div style="grid-column:2;grid-row:2;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding-top:4px">`;
+  html+=`<div style="grid-column:2;grid-row:2;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:4px;height:100%;box-sizing:border-box;overflow:hidden">`;
   html+=`<div class="center-panel">`;
   // 集中显示所有弃牌（按时间顺序，不分家）
   if(state.allDiscards.length>0){
@@ -1176,12 +1176,12 @@ function render(){
       html+=`<div style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);z-index:50;background:linear-gradient(90deg,#27ae60,#2ecc71);color:#fff;padding:4px 18px;border-radius:8px;font-weight:bold;font-size:13px;box-shadow:0 2px 10px rgba(0,0,0,.3);white-space:nowrap">你的回合</div>`;
     }
   }
-  html+=`<div class="player-panel${currentIdx===0&&phase==='playing'?' current':''}" style="min-width:600px;position:relative">
-    <div class="player-name">${p.name}${p.isDealer?'<span class="dealer-tag">庄</span>':''} <span class="score">${p.score}分</span> <span class="stat">手牌:${p.hand.length}</span></div>
+  html+=`<div class="player-panel${currentIdx===0&&phase==='playing'?' current':''}" style="width:900px;height:auto;position:relative;box-sizing:border-box">
+  <div class="player-name">${p.name}${p.isDealer?'<span class="dealer-tag">庄</span>':''} <span class="score">${p.score}分</span> <span class="stat">手牌:${p.hand.length}</span></div>
     <div class="meld-area">
       ${p.melds.length?p.melds.map(m=>`<span class="meld-group">${m.tiles.map(t=>tileFaceHTML(t,false,true)).join('')}<span>${m.type==='chi'?'吃':m.type==='peng'?'碰':'杠'}</span></span>`).join(''):''}
     </div>
-    <div class="hand">`;
+    <div class="hand" style="width:880px;min-height:80px">`;
   p.hand.forEach(t=>{
     const sel=selectedTileId===t.id;
     const isDrawn=t.id===state.lastDrawnTileId;
