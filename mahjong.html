@@ -869,42 +869,48 @@ function render(){
   const isEnded=phase==='ended';
   // 获取胡牌的牌（用于在赢家手牌中放大显示）
   let huTileId=null;
+  let huTile=null; // 胡的那张牌本身
   if(isEnded){
     huTileId=state.lastDiscard?state.lastDiscard.id:(state.lastDrawnTileId||null);
+  huTile=state.lastDiscard||null; // 点炮时为lastDiscard，自摸时为null（牌已在手牌中）
   }
 
   // 左玩家(北家) - 跨两行
   const p3=players[3];
+  const p3HandHtml=isEnded?(p3.hand.map(t=>`<span class="${t.id===huTileId?'hu-tile-enlarge':''}">${tileFaceHTML(t,false,true)}</span>`).join('')+(winnerIdx===3&&huTile?`<span class="hu-tile-enlarge">${tileFaceHTML(huTile,false,true)}</span>`:'')):p3.hand.map(()=>tileBackHTML()).join('');
   html+=`<div style="grid-column:1;grid-row:1/3;display:flex;align-items:flex-start;justify-content:center">
     <div class="player-panel side${currentIdx===3&&phase==='playing'?' current':''}">
       <div class="player-name">${p3.name}${p3.isDealer?'<span class="dealer-tag">庄</span>':''} <span class="score">${p3.score}分</span></div>
       <div class="meld-area">
         ${p3.melds.length?p3.melds.map(m=>`<span class="meld-group">${m.tiles.map(t=>tileFaceHTML(t,false,true)).join('')}<span>${m.type==='chi'?'吃':m.type==='peng'?'碰':'杠'}</span></span>`).join(''):''}
       </div>
-      <div class="hand side-hand">${isEnded?p3.hand.map(t=>`<span class="${t.id===huTileId?'hu-tile-enlarge':''}">${tileFaceHTML(t,false,true)}</span>`).join(''):p3.hand.map(()=>tileBackHTML()).join('')}</div>
-    </div>
+      <div class="hand side-hand">${p3HandHtml}</div>
+      </div>
   </div>`;
 
   // 上方玩家(南家)
   const p2=players[2];
+  const p2HandHtml=isEnded?(p2.hand.map(t=>`<span class="${t.id===huTileId?'hu-tile-enlarge':''}">${tileFaceHTML(t,false,true)}</span>`).join('')+(winnerIdx===2&&huTile?`<span class="hu-tile-enlarge">${tileFaceHTML(huTile,false,true)}</span>`:'')):p2.hand.map(()=>tileBackHTML(true)).join('');
   html+=`<div style="grid-column:2;grid-row:1;display:flex;justify-content:center;align-items:flex-start">
     <div class="player-panel${currentIdx===2&&phase==='playing'?' current':''}" style="min-width:460px">
       <div class="player-name">${p2.name}${p2.isDealer?'<span class="dealer-tag">庄</span>':''} <span class="score">${p2.score}分</span></div>
       <div class="meld-area">
         ${p2.melds.length?p2.melds.map(m=>`<span class="meld-group">${m.tiles.map(t=>tileFaceHTML(t,false,true)).join('')}<span>${m.type==='chi'?'吃':m.type==='peng'?'碰':'杠'}</span></span>`).join(''):''}
-      </div><div class="hand" style="min-width:420px">${isEnded?p2.hand.map(t=>`<span class="${t.id===huTileId?'hu-tile-enlarge':''}">${tileFaceHTML(t,false,true)}</span>`).join(''):p2.hand.map(()=>tileBackHTML(true)).join('')}</div>
+      </div>
+    <div class="hand" style="min-width:480px">${p2HandHtml}</div>
     </div>
   </div>`;
 
   // 右玩家(东家) - 跨两行
   const p1=players[1];
+  const p1HandHtml=isEnded?(p1.hand.map(t=>`<span class="${t.id===huTileId?'hu-tile-enlarge':''}">${tileFaceHTML(t,false,true)}</span>`).join('')+(winnerIdx===1&&huTile?`<span class="hu-tile-enlarge">${tileFaceHTML(huTile,false,true)}</span>`:'')):p1.hand.map(()=>tileBackHTML()).join('');
   html+=`<div style="grid-column:3;grid-row:1/3;display:flex;align-items:flex-start;justify-content:center">
     <div class="player-panel side${currentIdx===1&&phase==='playing'?' current':''}">
       <div class="player-name">${p1.name}${p1.isDealer?'<span class="dealer-tag">庄</span>':''} <span class="score">${p1.score}分</span></div>
       <div class="meld-area">
         ${p1.melds.length?p1.melds.map(m=>`<span class="meld-group">${m.tiles.map(t=>tileFaceHTML(t,false,true)).join('')}<span>${m.type==='chi'?'吃':m.type==='peng'?'碰':'杠'}</span></span>`).join(''):''}
       </div>
-      <div class="hand side-hand">${isEnded?p1.hand.map(t=>`<span class="${t.id===huTileId?'hu-tile-enlarge':''}">${tileFaceHTML(t,false,true)}</span>`).join(''):p1.hand.map(()=>tileBackHTML()).join('')}</div>
+      <div class="hand side-hand">${p1HandHtml}</div>
     </div>
   </div>`;
 
@@ -974,6 +980,12 @@ function render(){
       ${tileFaceHTML(t,sel,false)}
     </div>`;
   });
+  // 如果是点炮胡且赢家是玩家，添加胡的那张牌
+  if(isEnded&&winnerIdx===0&&huTile){
+    html+=`<div style="display:inline-block;transform:translateY(-15px) scale(1.3);box-shadow:0 10px 25px rgba(240,192,64,.7),0 0 35px rgba(240,192,64,.5);z-index:15;position:relative">
+      ${tileFaceHTML(huTile,false,false)}
+    </div>`;
+  }
   html+=`</div></div></div>`;
 
   // 玩法说明
