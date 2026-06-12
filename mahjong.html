@@ -1114,7 +1114,7 @@ function render(){
   html+=`<div style="grid-column:2;grid-row:1;display:flex;justify-content:center;align-items:flex-start;padding-top:4px">
     <div class="player-panel${currentIdx===2&&phase==='playing'?' current':''}" style="min-width:500px;height:70px;padding:3px 10px;box-sizing:border-box;overflow:hidden">
       <div class="player-name">${p2.name}${p2.isDealer?'<span class="dealer-tag">庄</span>':''} <span class="score">${p2.score}分</span></div>
-      <div class="meld-area" style="min-height:22px;margin:2px 0">
+      <div class="meld-area" style="min-height:12px;margin:2px 0">
         ${p2.melds.length?p2.melds.map(m=>`<span class="meld-group">${m.tiles.map(t=>tileFaceHTML(t,false,true)).join('')}<span>${m.type==='chi'?'吃':m.type==='peng'?'碰':'杠'}</span></span>`).join(''):''}
       </div>
       <div class="hand" style="min-width:480px;margin-top:2px;min-height:60px;flex-wrap:nowrap;overflow:hidden">${p2HandHtml}</div> 
