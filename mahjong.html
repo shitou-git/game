@@ -131,7 +131,7 @@ body{min-height:100vh;background:linear-gradient(135deg,#1a3a1a 0%,#0d1f0d 100%)
 .meld-group span:last-child{font-size:8px;color:#666;margin-left:2px}
 
 /* 中央弃牌区 */
-.center-discards{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;padding:6px;border-radius:8px;margin-bottom:8px;width:540px;min-height:210px;height:210px;z-index:1;position:relative}
+.center-discards{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;padding:4px;border-radius:8px;margin-bottom:4px;width:520px;height:160px;z-index:1;position:relative;box-sizing:border-box;overflow:hidden}
 .center-discard-tile{display:inline-block;position:relative;z-index:1}
 .center-discard-tile .tile-face{width:calc(var(--tile-width)*0.7);height:calc(var(--tile-height)*0.7);font-size:calc(var(--tile-font-size)*0.7)}
 .center-discard-tile .tile-face .sub{font-size:calc(var(--tile-sub-font)*0.7)}
@@ -158,8 +158,8 @@ body{min-height:100vh;background:linear-gradient(135deg,#1a3a1a 0%,#0d1f0d 100%)
   border-radius:50%;border:4px solid #3a2a1a;box-shadow:inset 0 0 60px rgba(0,0,0,.4),0 0 20px rgba(0,0,0,.3);
 }
 .center-panel{
-  background:transparent;border:1px solid rgba(200,200,200,.8);border-radius:12px;padding:16px 24px;
-  min-width:560px;min-height:220px;max-width:560px;text-align:center;display:flex;flex-direction:column;justify-content:center;position:relative;
+  background:transparent;border:1px solid rgba(200,200,200,.8);border-radius:12px;padding:8px 12px;
+  min-width:560px;min-height:220px;height:220px;max-width:560px;max-height:220px;text-align:center;display:flex;flex-direction:column;justify-content:center;position:relative;box-sizing:border-box;
 }
 .center-panel>*{position:relative}
 .center-discards{z-index:1;position:relative}
@@ -1084,8 +1084,7 @@ function render(){
     </div>
   </div>`;
 
-  html+=`<div style="display:grid;grid-template-columns:1fr 3fr 1fr;grid-template-rows:90px 220px 200px;gap:6px;width:100%;max-width:1200px">`;
-
+  html+=`<div style="display:grid;grid-template-columns:1fr 3fr 1fr;grid-template-rows:110px 230px 200px;gap:10px;width:100%;max-width:1200px">`;
   // 游戏结束时所有玩家明牌
   const isEnded=phase==='ended';
   // 获取胡牌的牌（用于在赢家手牌中放大显示）
@@ -1112,14 +1111,14 @@ function render(){
   // 上方玩家(南家)
   const p2=players[2];
   const p2HandHtml=isEnded?(p2.hand.map(t=>`<span class="${t.id===huTileId?'hu-tile-enlarge':''}">${tileFaceHTML(t,false,true)}</span>`).join('')+(winnerIdx===2&&huTile?`<span class="hu-tile-enlarge">${tileFaceHTML(huTile,false,true)}</span>`:'')):p2.hand.map(()=>tileBackHTML(true)).join('');
-  html+=`<div style="grid-column:2;grid-row:1;display:flex;justify-content:center;align-items:center">
-    <div class="player-panel${currentIdx===2&&phase==='playing'?' current':''}" style="min-width:500px;min-height:70px;padding:4px 10px">
+  html+=`<div style="grid-column:2;grid-row:1;display:flex;justify-content:center;align-items:flex-start;padding-top:4px">
+    <div class="player-panel${currentIdx===2&&phase==='playing'?' current':''}" style="min-width:500px;height:100px;padding:3px 10px;box-sizing:border-box;overflow:hidden">
       <div class="player-name">${p2.name}${p2.isDealer?'<span class="dealer-tag">庄</span>':''} <span class="score">${p2.score}分</span></div>
-      <div class="meld-area">
+      <div class="meld-area" style="min-height:22px;margin:2px 0">
         ${p2.melds.length?p2.melds.map(m=>`<span class="meld-group">${m.tiles.map(t=>tileFaceHTML(t,false,true)).join('')}<span>${m.type==='chi'?'吃':m.type==='peng'?'碰':'杠'}</span></span>`).join(''):''}
       </div>
-      <div class="hand" style="min-width:480px;margin-top:2px">${p2HandHtml}</div>
-    </div>
+      <div class="hand" style="min-width:480px;margin-top:2px;min-height:60px;flex-wrap:nowrap;overflow:hidden">${p2HandHtml}</div> 
+      </div>
   </div>`;
 
   // 右玩家(东家) - 跨两行
@@ -1136,9 +1135,8 @@ function render(){
   </div>`;
 
   // 中央区域
-  html+=`<div style="grid-column:2;grid-row:2;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:220px">`;
+  html+=`<div style="grid-column:2;grid-row:2;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding-top:4px">`;
   html+=`<div class="center-panel">`;
-
   // 集中显示所有弃牌（按时间顺序，不分家）
   if(state.allDiscards.length>0){
     html+=`<div class="center-discards">`;
