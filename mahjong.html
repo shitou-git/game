@@ -13,7 +13,7 @@ body{min-height:100vh;background:linear-gradient(135deg,#1a3a1a 0%,#0d1f0d 100%)
   --tile-width: 48px;    /* 牌的宽度 */
   --tile-height: 64px;   /* 牌的高度 */
   --tile-font-size: 16px;/* 牌面字体大小 */
-  --tile-sub-font: 11px; /* 牌面小字大小（万/条/筒）*/
+  --tile-sub-font: 13px; /* 牌面小字大小（万/条/筒）*/
   --tile-border-radius: 7px; /* 牌角圆角 */
   --tile-back-icon: 28px;/* 牌背图标大小 */
 }
@@ -115,7 +115,7 @@ body{min-height:100vh;background:linear-gradient(135deg,#1a3a1a 0%,#0d1f0d 100%)
 .player-panel{
   background:transparent;border:1px solid rgba(200,200,200,.8);border-radius:10px;padding:8px 12px;
   min-width:200px;
-  display:flex;flex-direction:column;min-height:60px;
+  display:flex;flex-direction:column;min-height:140px;
 }
 .player-panel.side{width:100%;max-width:220px;min-height:180px}
 .player-panel.current{border:2px solid #f0c040;box-shadow:0 0 15px rgba(240,192,64,.4)}
@@ -1181,7 +1181,7 @@ function render(){
     <div class="meld-area">
       ${p.melds.length?p.melds.map(m=>`<span class="meld-group">${m.tiles.map(t=>tileFaceHTML(t,false,true)).join('')}<span>${m.type==='chi'?'吃':m.type==='peng'?'碰':'杠'}</span></span>`).join(''):''}
     </div>
-    <div class="hand" style="width:880px;min-height:80px">`;
+    <div class="hand">`;
   p.hand.forEach(t=>{
     const sel=selectedTileId===t.id;
     const isDrawn=t.id===state.lastDrawnTileId;
