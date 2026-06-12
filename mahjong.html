@@ -12,8 +12,8 @@ body{min-height:100vh;background:linear-gradient(135deg,#1a3a1a 0%,#0d1f0d 100%)
 :root{
   --tile-width: 48px;    /* 牌的宽度 */
   --tile-height: 64px;   /* 牌的高度 */
-  --tile-font-size: 19px;/* 牌面字体大小 */
-  --tile-sub-font: 14px; /* 牌面小字大小（万/条/筒）*/
+  --tile-font-size: 16px;/* 牌面字体大小 */
+  --tile-sub-font: 11px; /* 牌面小字大小（万/条/筒）*/
   --tile-border-radius: 7px; /* 牌角圆角 */
   --tile-back-icon: 28px;/* 牌背图标大小 */
 }
@@ -39,8 +39,9 @@ body{min-height:100vh;background:linear-gradient(135deg,#1a3a1a 0%,#0d1f0d 100%)
   .score{font-size:9px !important}
   .dealer-tag{font-size:8px !important;padding:1px 3px !important}
   .hand{gap:2px !important;min-height:auto !important;margin-top:3px !important}
-  .center-panel{padding:8px !important;min-height:120px !important}
+  .center-panel{padding:8px !important;min-height:120px !important;min-width:400px !important;max-width:400px !important}
   .center-panel h2{font-size:14px !important}
+  .center-discards{width:380px !important;height:120px !important;min-height:120px !important}
   .tip{font-size:11px !important}
 }
 
@@ -130,8 +131,8 @@ body{min-height:100vh;background:linear-gradient(135deg,#1a3a1a 0%,#0d1f0d 100%)
 .meld-group span:last-child{font-size:8px;color:#666;margin-left:2px}
 
 /* 中央弃牌区 */
-.center-discards{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;padding:6px;border-radius:8px;margin-bottom:8px;width:360px;min-height:80px}
-.center-discard-tile{display:inline-block}
+.center-discards{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;padding:6px;border-radius:8px;margin-bottom:8px;width:540px;min-height:210px;height:210px;z-index:1;position:relative}
+.center-discard-tile{display:inline-block;position:relative;z-index:1}
 .center-discard-tile .tile-face{width:calc(var(--tile-width)*0.7);height:calc(var(--tile-height)*0.7);font-size:calc(var(--tile-font-size)*0.7)}
 .center-discard-tile .tile-face .sub{font-size:calc(var(--tile-sub-font)*0.7)}
 
@@ -158,8 +159,10 @@ body{min-height:100vh;background:linear-gradient(135deg,#1a3a1a 0%,#0d1f0d 100%)
 }
 .center-panel{
   background:transparent;border:1px solid rgba(200,200,200,.8);border-radius:12px;padding:16px 24px;
-  min-width:400px;min-height:150px;max-width:400px;text-align:center;display:flex;flex-direction:column;justify-content:center;
+  min-width:560px;min-height:220px;max-width:560px;text-align:center;display:flex;flex-direction:column;justify-content:center;position:relative;
 }
+.center-panel>*{position:relative}
+.center-discards{z-index:1;position:relative}
 .log-area{background:rgba(0,0,0,.3);border-radius:8px;padding:8px 12px;max-height:120px;overflow-y:auto;color:#ddd;font-size:12px;text-align:left}
 .log-line{margin:2px 0}.log-hu{color:#f39c12;font-weight:bold}.log-self{color:#2ecc71;font-weight:bold}
 .stat{font-size:11px;color:#888;margin-top:2px}
@@ -174,14 +177,14 @@ body{min-height:100vh;background:linear-gradient(135deg,#1a3a1a 0%,#0d1f0d 100%)
 .modal-score td{padding:4px}
 .chi-options{display:flex;gap:8px;justify-content:center;margin:8px 0}
 .chi-group{display:flex;gap:2px;align-items:flex-end}
-.action-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:8px}
+.action-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:8px;position:relative;z-index:30}
 .tip{font-size:11px;color:#888;margin-top:4px}
 </style>
 </head>
 <body>
 
 <div id="app" style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:10px"></div>
-<div class="footer">@Stone</div>
+<div class="footer">@雪白梅</div>
 
 <script>
 'use strict';
@@ -313,146 +316,172 @@ function checkSevenPairs(hand){
   return pairs.length===7?{groups:pairs}:null;
 }
 
+function checkThirteenOrphans(hand){
+  if(hand.length!==14) return null;
+  const need=[
+    {suit:'wan',value:1},{suit:'wan',value:9},
+    {suit:'tiao',value:1},{suit:'tiao',value:9},
+    {suit:'tong',value:1},{suit:'tong',value:9},
+    {suit:'feng',value:1},{suit:'feng',value:2},{suit:'feng',value:3},{suit:'feng',value:4},
+    {suit:'jian',value:1},{suit:'jian',value:2},{suit:'jian',value:3}
+  ];
+  const byKey=groupBy(hand,tileKey);
+  let hasPair=false;
+  for(const n of need){
+    const k=n.suit+'-'+n.value;
+    const tiles=byKey.get(k)||[];
+    if(tiles.length===0) return null;
+    if(tiles.length>=2) hasPair=true;
+  }
+  // 检查手牌中是否有多余的牌（只能在 need 中出现，且其中一个是对）
+  for(const [k,tiles] of byKey){
+    if(!need.some(n=>n.suit+'-'+n.value===k)) return null;
+    if(tiles.length>2) return null;
+  }
+  return hasPair?{groups:[]}:null;
+}
+
+// 查找可补杠的碰：已有碰的牌，手中还有1张
+function findGangFromPeng(hand,melds){
+  for(let i=0;i<melds.length;i++){
+    const m=melds[i];
+    if(m.type!=='peng') continue;
+    const key=m.tiles[0];
+    if(hand.filter(t=>sameTile(t,key)).length>=1){
+      return {meldIdx:i,tile:key};
+    }
+  }
+  return null;
+}
+
 function canHuInner(hand,melds,newTile){
   return tryHu(hand,melds,newTile,false)!==null;
 }
 
 function countFan(hand,melds,selfDraw,analysis,newTile){
-  const allTiles=newTile?[...hand,newTile]:[...hand];
+  // 把手牌 + melds 合并做番型判断
+  let allTiles=newTile?[...hand,newTile]:[...hand];
+  melds.forEach(m=>{allTiles=allTiles.concat(m.tiles);});
+
   const entries=[];
   let fan=0;
+
   const suits=new Set(allTiles.filter(t=>['wan','tiao','tong'].includes(t.suit)).map(t=>t.suit));
   const honorTiles=allTiles.filter(t=>['feng','jian'].includes(t.suit));
   const suitTiles=allTiles.filter(t=>['wan','tiao','tong'].includes(t.suit));
-  const hasChi=melds.some(m=>m.type==='chi');
-  const allTriplets=melds.every(m=>m.type==='peng'||m.type==='gang');
-  const onlyHonors=suitTiles.length===0&&honorTiles.length>0;
-  const onlyOneSuit=suits.size===1&&suitTiles.length>0&&honorTiles.length===0;
-  const mixedOneSuit=suits.size===1&&honorTiles.length>0;
-  
-  // 七对（独立番型，不与其他叠加）
-  if(analysis.isSevenPairs&&!hasChi){
-    return {fan:1,entries:[{name:'七对',fan:1}],patternName:'七对'};
+
+  // 门清：没有任何明的吃/碰/明杠（melds为空 或 仅含暗杠）
+  const isMenZen=melds.length===0||melds.every(m=>m.type==='closedGang');
+  // 副露碰碰胡检查：副露中是否全是刻子型（无吃）
+  const hasChiMeld=melds.some(m=>m.type==='chi');
+  const allMeldsTriplets=melds.every(m=>m.type==='peng'||m.type==='gang'||m.type==='closedGang');
+  // 分解中是否有顺子（allTiles的分解）
+  const hasTripletForm=analysis.decompositions&&analysis.decompositions.length>0;
+  const isAllTripletsByDecompose=hasTripletForm&&analysis.decompositions.some(d=>d.groups.every(g=>g.length===3&&g.every(t=>tileKey(t)===tileKey(g[0]))));
+
+  // 七小对 4 番（独立番型，不与其他叠加）
+  if(analysis.isSevenPairs){
+    fan+=4;
+    entries.push({name:'七小对',fan:4});
   }
-  
-  // 十三幺（独立番型）
+
+  // 十三幺 13 番（封顶）
   if(analysis.isThirteenOrphans){
-    return {fan:9,entries:[{name:'十三幺',fan:9}],patternName:'十三幺'};
+    return {fan:13,entries:[{name:'十三幺',fan:13}],patternName:'十三幺'};
   }
-  
-  // 大三元（字一色条件满足时才可能）
-  if(onlyHonors){
-    const faceTiles=honorTiles.filter(t=>['jian'].includes(t.suit)||(t.suit==='feng'&&!['dong','nan','xi','bei'].includes(t.value)));
-    const faCount=honorTiles.filter(t=>t.suit==='jian'&&t.value===1).length;
-    const baCount=honorTiles.filter(t=>t.suit==='jian'&&t.value===2).length;
-    const zhongCount=honorTiles.filter(t=>t.suit==='jian'&&t.value===3).length;
-    if(faCount>=3&&baCount>=3&&zhongCount>=3){
-      return {fan:9,entries:[{name:'大三元',fan:9}],patternName:'大三元'};
+
+  // 大三元 8 番：中、发、白 都是刻子
+  if(!analysis.isSevenPairs){
+    // 统计中/发/白在 melds 和 手牌中是否各有至少3张
+    const zhongTiles=allTiles.filter(t=>t.suit==='jian'&&t.value===3);
+    const faTiles=allTiles.filter(t=>t.suit==='jian'&&t.value===1);
+    const baiTiles=allTiles.filter(t=>t.suit==='jian'&&t.value===2);
+    if(zhongTiles.length>=3&&faTiles.length>=3&&baiTiles.length>=3){
+      fan+=8;entries.push({name:'大三元',fan:8});
     }
   }
-  
-  // 大四喜
-  if(onlyHonors){
-    const dCount=honorTiles.filter(t=>t.suit==='feng'&&t.value==='dong').length;
-    const nCount=honorTiles.filter(t=>t.suit==='feng'&&t.value==='nan').length;
-    const xCount=honorTiles.filter(t=>t.suit==='feng'&&t.value==='xi').length;
-    const bCount=honorTiles.filter(t=>t.suit==='feng'&&t.value==='bei').length;
-    if(dCount>=3&&nCount>=3&&xCount>=3&&bCount>=3){
-      return {fan:9,entries:[{name:'大四喜',fan:9}],patternName:'大四喜'};
+
+  // 大四喜 8 番：东南西北 都是刻子
+  if(!analysis.isSevenPairs&&fan<8){
+    const dTiles=allTiles.filter(t=>t.suit==='feng'&&t.value===1);
+    const nTiles=allTiles.filter(t=>t.suit==='feng'&&t.value===2);
+    const xTiles=allTiles.filter(t=>t.suit==='feng'&&t.value===3);
+    const bTiles=allTiles.filter(t=>t.suit==='feng'&&t.value===4);
+    if(dTiles.length>=3&&nTiles.length>=3&&xTiles.length>=3&&bTiles.length>=3){
+      fan+=8;entries.push({name:'大四喜',fan:8});
     }
   }
-  
-  // 字一色（全部是字牌）
-  if(onlyHonors){
-    return {fan:8,entries:[{name:'字一色',fan:8}],patternName:'字一色'};
-  }
-  
-  // 小三元（字牌中有两种且每种至少2张）
-  if(onlyHonors){
-    const faCount=honorTiles.filter(t=>t.suit==='jian'&&t.value===1).length;
-    const baCount=honorTiles.filter(t=>t.suit==='jian'&&t.value===2).length;
-    const zhongCount=honorTiles.filter(t=>t.suit==='jian'&&t.value===3).length;
-    const typesWith2=[faCount>=2,baCount>=2,zhongCount>=2].filter(Boolean).length;
-    if(typesWith2>=2){
-      return {fan:7,entries:[{name:'小三元',fan:7}],patternName:'小三元'};
+
+  // 清一色 6 番（单一花色，无字牌，未被更高番型占用）
+  if(!analysis.isSevenPairs&&fan<8){
+    if(suits.size===1&&suitTiles.length>0&&honorTiles.length===0){
+      fan+=6;entries.push({name:'清一色',fan:6});
     }
   }
-  
-  // 小四喜（风牌中有三种且每种至少2张）
-  if(onlyHonors){
-    const dCount=honorTiles.filter(t=>t.suit==='feng'&&t.value==='dong').length;
-    const nCount=honorTiles.filter(t=>t.suit==='feng'&&t.value==='nan').length;
-    const xCount=honorTiles.filter(t=>t.suit==='feng'&&t.value==='xi').length;
-    const bCount=honorTiles.filter(t=>t.suit==='feng'&&t.value==='bei').length;
-    const typesWith2=[dCount>=2,nCount>=2,xCount>=2,bCount>=2].filter(Boolean).length;
-    if(typesWith2>=3){
-      return {fan:7,entries:[{name:'小四喜',fan:7}],patternName:'小四喜'};
+
+  // 混一色 3 番（单一花色+字牌）
+  if(!analysis.isSevenPairs&&fan<8){
+    if(suits.size===1&&honorTiles.length>0&&!entries.some(e=>e.name==='清一色')){
+      fan+=3;entries.push({name:'混一色',fan:3});
     }
   }
-  
-  // 清幺九（全是幺九且单一花色）
-  if(onlyOneSuit){
-    const yaoTiles=suitTiles.filter(t=>t.value===1||t.value===9);
-    if(yaoTiles.length===suitTiles.length){
-      return {fan:8,entries:[{name:'清幺九',fan:8}],patternName:'清幺九'};
+
+  // 碰碰胡 2 番（全部是刻子无顺子）
+  if(!analysis.isSevenPairs&&fan<8){
+    const isPengPeng=allMeldsTriplets&&isAllTripletsByDecompose;
+    if(isPengPeng){
+      fan+=2;entries.push({name:'碰碰胡',fan:2});
     }
   }
-  
-  // 混幺九（有字牌+幺九）
-  if(mixedOneSuit||(onlyHonors&&honorTiles.length>=2)){
-    const yaoTiles=suitTiles.filter(t=>t.value===1||t.value===9);
-    if(yaoTiles.length>0&&yaoTiles.length===suitTiles.length&&honorTiles.length>0){
-      return {fan:6,entries:[{name:'混幺九',fan:6}],patternName:'混幺九'};
-    }
+
+  // 基础番型：如果什么都没有则为鸡胡 1 番（平胡）
+  if(entries.length===0){
+    fan+=1;entries.push({name:'鸡胡',fan:1});
   }
-  
-  // 清碰（清一色+碰碰胡）
-  if(onlyOneSuit&&allTriplets&&!hasChi){
-    return {fan:6,entries:[{name:'清碰',fan:6}],patternName:'清碰'};
+
+  // === 叠加番 ===
+  // 门清 +1 番（没有吃/碰/明杠；仅在非七小对时加）
+  if(isMenZen&&!analysis.isSevenPairs){
+    fan+=1;entries.push({name:'门清',fan:1});
   }
-  
-  // 清一色（单一花色无字牌）
-  if(onlyOneSuit){
-    return {fan:5,entries:[{name:'清一色',fan:5}],patternName:'清一色'};
+  // 自摸 +1 番
+  if(selfDraw){
+    fan+=1;entries.push({name:'自摸',fan:1});
   }
-  
-  // 混碰（混一色+碰碰胡）
-  if(mixedOneSuit&&allTriplets&&!hasChi){
-    return {fan:5,entries:[{name:'混碰',fan:5}],patternName:'混碰'};
+  // 杠上开花 +2 番
+  if(analysis.isGangBlooming){
+    fan+=2;entries.push({name:'杠上开花',fan:2});
   }
-  
-  // 混一色（单一花色+字牌）
-  if(mixedOneSuit){
-    return {fan:3,entries:[{name:'混一色',fan:3}],patternName:'混一色'};
+  // 抢杠胡 +2 番
+  if(analysis.isRobGang){
+    fan+=2;entries.push({name:'抢杠胡',fan:2});
   }
-  
-  // 碰碰胡（全部刻子无顺子）
-  if(allTriplets&&!hasChi){
-    return {fan:3,entries:[{name:'碰碰胡',fan:3}],patternName:'碰碰胡'};
-  }
-  
-  // 平胡（全部顺子无刻子）
-  if(!hasChi&&!allTriplets&&suitTiles.length>0&&honorTiles.length===0){
-    return {fan:1,entries:[{name:'平胡',fan:1}],patternName:'平胡'};
-  }
-  
-  // 鸡胡（默认）
-  entries.push({name:'鸡胡',fan:0});
-  fan=0;
+
+  // 封顶 13 番
+  if(fan>13) fan=13;
   return {fan,entries,patternName:entries.map(e=>e.name).join('+')};
 }
 
-function tryHu(hand,melds,newTile,selfDraw){
+function tryHu(hand,melds,newTile,selfDraw,isGangBlooming,isRobGang){
   const all=newTile?[...hand,newTile]:[...hand];
   const seven=melds.length===0?checkSevenPairs(all):null;
+  const thirteen=melds.length===0?checkThirteenOrphans(all):null;
   const decomps=tryDecompose(all);
-  if(!seven&&decomps.length===0) return null;
-  const analysis={isSevenPairs:!!seven,sevenPairsGroups:seven?.groups,decompositions:decomps,allTiles:all};
+  if(!seven&&!thirteen&&decomps.length===0) return null;
+  const analysis={
+    isSevenPairs:!!seven,
+    sevenPairsGroups:seven?.groups,
+    isThirteenOrphans:!!thirteen,
+    decompositions:decomps,
+    allTiles:all,
+    isGangBlooming:!!isGangBlooming,
+    isRobGang:!!isRobGang
+  };
   const {fan,entries,patternName}=countFan(hand,melds,selfDraw,analysis,newTile);
   return {fan,entries,patternName,tiles:all,selfDraw};
 }
 
-function getScore(fan){return fan<=0?1:Math.pow(2,Math.min(fan,5));}
+function getScore(fan){return fan<=0?1:Math.pow(2,Math.min(fan,10)-1);}
 
 // ========== 吃/碰/杠判定 ==========
 function canPeng(hand,t){
@@ -831,14 +860,89 @@ function humanSelfHu(){
 function humanHiddenGang(){
   const hg=findHiddenGang(state.players[0].hand);
   if(!hg) return;
-  state.players[0].melds.push({type:'gang',tiles:hg});
+  state.players[0].melds.push({type:'closedGang',tiles:hg});
   state.players[0].hand=state.players[0].hand.filter(t=>!hg.includes(t));
+  let bloomed=false;
   if(state.wall.length>0){
     const b=state.wall.pop();
     state.players[0].hand=sortTiles([...state.players[0].hand,b]);
+    state.lastDrawnTileId=b.id;
+    // 检查杠上开花
+    if(canHuInner(state.players[0].hand,state.players[0].melds,null)){
+      const r=tryHu(state.players[0].hand,state.players[0].melds,null,true,true,false);
+      if(r){
+        const sc=getScore(r.fan);
+        state.players[0].score+=sc*3;
+        state.players.forEach((p,i)=>{if(i!==0)p.score-=sc;});
+        state.players[0].hasWon=true;
+        state.winnerIdx=0;state.huInfo=r;state.phase='ended';
+        state.log.push(`你暗杠杠上开花！${r.patternName}（${r.fan}番）得分${sc*3}`);
+        render();return;
+      }
+    }
   }
   state.log.push('你暗杠');
   state.needsDraw=false;
+  state.pending=[];state.lastDiscard=null;state.lastDiscarder=-1;
+  state.currentIdx=0;state.phase='playing';
+  render();
+}
+
+// 碰后补杠
+function humanGangFromPeng(){
+  const info=findGangFromPeng(state.players[0].hand,state.players[0].melds);
+  if(!info) return;
+  const extraTile=state.players[0].hand.find(t=>sameTile(t,info.tile));
+  if(!extraTile) return;
+  const oldMeld=state.players[0].melds[info.meldIdx];
+  // 先移除旧碰
+  state.players[0].melds.splice(info.meldIdx,1);
+  // 新的杠（包含那张牌）
+  state.players[0].melds.push({type:'gang',tiles:[...oldMeld.tiles,extraTile]});
+  state.players[0].hand=state.players[0].hand.filter(t=>t.id!==extraTile.id);
+
+  state.log.push(`你补杠${tileLabel(extraTile)}`);
+
+  // 先让其他玩家检查是否抢杠胡（只允许点炮胡）
+  let robbed=false;
+  for(let i=1;i<4;i++){
+    const p=state.players[i];
+    if(canHuInner(p.hand,p.melds,extraTile)){
+      const r=tryHu(p.hand,p.melds,extraTile,false,false,true);
+      if(r){
+        const sc=getScore(r.fan);
+        const totalSc=sc*3;
+        p.score+=totalSc;p.hasWon=true;
+        state.players[0].score-=totalSc;
+        state.winnerIdx=i;state.huInfo=r;state.phase='ended';
+        state.log.push(`${PLAYER_NAMES[i]}抢杠胡！${r.patternName}（${r.fan}番）包你三倍${totalSc}分`);
+        robbed=true;
+        render();return;
+      }
+    }
+  }
+
+  // 没被抢杠，补牌，检查杠上开花
+  if(state.wall.length>0){
+    const b=state.wall.pop();
+    state.players[0].hand=sortTiles([...state.players[0].hand,b]);
+    state.lastDrawnTileId=b.id;
+    if(canHuInner(state.players[0].hand,state.players[0].melds,null)){
+      const r=tryHu(state.players[0].hand,state.players[0].melds,null,true,true,false);
+      if(r){
+        const sc=getScore(r.fan);
+        state.players[0].score+=sc*3;
+        state.players.forEach((p,i)=>{if(i!==0)p.score-=sc;});
+        state.players[0].hasWon=true;
+        state.winnerIdx=0;state.huInfo=r;state.phase='ended';
+        state.log.push(`你补杠杠上开花！${r.patternName}（${r.fan}番）得分${sc*3}`);
+        render();return;
+      }
+    }
+  }
+  state.needsDraw=false;
+  state.pending=[];state.lastDiscard=null;state.lastDiscarder=-1;
+  state.currentIdx=0;state.phase='playing';
   render();
 }
 
@@ -860,18 +964,49 @@ function humanClaimGang(){
   if(state.phase!=='claiming') return;
   const gt=findGang(state.players[0].hand,state.lastDiscard);
   if(!gt) return;
-  state.players[0].melds.push({type:'gang',tiles:[...gt,state.lastDiscard]});
+  const gangTile=state.lastDiscard;
+  state.players[0].melds.push({type:'gang',tiles:[...gt,gangTile]});
   state.players[0].hand=state.players[0].hand.filter(t=>!gt.includes(t));
+  if(state.allDiscards.length>0) state.allDiscards.pop();
+
+  // 检查是否被抢杠胡（其他玩家胡这张）
+  for(let i=1;i<4;i++){
+    const p=state.players[i];
+    if(canHuInner(p.hand,p.melds,gangTile)){
+      const r=tryHu(p.hand,p.melds,gangTile,false,false,true);
+      if(r){
+        const sc=getScore(r.fan);
+        const totalSc=sc*3;
+        p.score+=totalSc;p.hasWon=true;
+        state.players[0].score-=totalSc;
+        state.winnerIdx=i;state.huInfo=r;state.phase='ended';
+        state.log.push(`${PLAYER_NAMES[i]}抢杠胡！${r.patternName}（${r.fan}番）包你三倍${totalSc}分`);
+        render();return;
+      }
+    }
+  }
+
+  // 补牌并检查杠上开花
   if(state.wall.length>0){
     const b=state.wall.pop();
     state.players[0].hand=sortTiles([...state.players[0].hand,b]);
+    state.lastDrawnTileId=b.id;
+    if(canHuInner(state.players[0].hand,state.players[0].melds,null)){
+      const r=tryHu(state.players[0].hand,state.players[0].melds,null,true,true,false);
+      if(r){
+        const sc=getScore(r.fan);
+        state.players[0].score+=sc*3;
+        state.players.forEach((p,i)=>{if(i!==0)p.score-=sc;});
+        state.players[0].hasWon=true;
+        state.winnerIdx=0;state.huInfo=r;state.phase='ended';
+        state.log.push(`你杠${tileLabel(gangTile)}杠上开花！${r.patternName}（${r.fan}番）得分${sc*3}`);
+        render();return;
+      }
+    }
   }
-  state.log.push(`你杠${tileLabel(state.lastDiscard)}`);
-  if(state.allDiscards.length>0) state.allDiscards.pop();
+  state.log.push(`你杠${tileLabel(gangTile)}`);
   state.pending=[];state.lastDiscard=null;state.lastDiscarder=-1;
-  state.phase='playing';
-  state.currentIdx=0;
-  state.needsDraw=false;
+  state.phase='playing';state.currentIdx=0;state.needsDraw=false;
   render();
 }
 
@@ -949,7 +1084,7 @@ function render(){
     </div>
   </div>`;
 
-  html+=`<div style="display:grid;grid-template-columns:1fr 3fr 1fr;grid-template-rows:130px 200px 170px;gap:6px;width:100%;max-width:1200px">`;
+  html+=`<div style="display:grid;grid-template-columns:1fr 3fr 1fr;grid-template-rows:90px 220px 200px;gap:6px;width:100%;max-width:1200px">`;
 
   // 游戏结束时所有玩家明牌
   const isEnded=phase==='ended';
@@ -964,8 +1099,8 @@ function render(){
   // 左玩家(北家) - 跨两行
   const p3=players[3];
   const p3HandHtml=isEnded?(p3.hand.map(t=>`<span class="${t.id===huTileId?'hu-tile-enlarge':''}">${tileFaceHTML(t,false,true)}</span>`).join('')+(winnerIdx===3&&huTile?`<span class="hu-tile-enlarge">${tileFaceHTML(huTile,false,true)}</span>`:'')):p3.hand.map(()=>tileBackHTML()).join('');
-  html+=`<div style="grid-column:1;grid-row:1/3;display:flex;align-items:flex-start;justify-content:center">
-    <div class="player-panel side${currentIdx===3&&phase==='playing'?' current':''}">
+  html+=`<div style="grid-column:1;grid-row:2;display:flex;align-items:center;justify-content:center">
+    <div class="player-panel side${currentIdx===3&&phase==='playing'?' current':''}" style="min-height:180px">
       <div class="player-name">${p3.name}${p3.isDealer?'<span class="dealer-tag">庄</span>':''} <span class="score">${p3.score}分</span></div>
       <div class="meld-area">
         ${p3.melds.length?p3.melds.map(m=>`<span class="meld-group">${m.tiles.map(t=>tileFaceHTML(t,false,true)).join('')}<span>${m.type==='chi'?'吃':m.type==='peng'?'碰':'杠'}</span></span>`).join(''):''}
@@ -977,21 +1112,21 @@ function render(){
   // 上方玩家(南家)
   const p2=players[2];
   const p2HandHtml=isEnded?(p2.hand.map(t=>`<span class="${t.id===huTileId?'hu-tile-enlarge':''}">${tileFaceHTML(t,false,true)}</span>`).join('')+(winnerIdx===2&&huTile?`<span class="hu-tile-enlarge">${tileFaceHTML(huTile,false,true)}</span>`:'')):p2.hand.map(()=>tileBackHTML(true)).join('');
-  html+=`<div style="grid-column:2;grid-row:1;display:flex;justify-content:center;align-items:flex-start">
-    <div class="player-panel${currentIdx===2&&phase==='playing'?' current':''}" style="min-width:500px">
+  html+=`<div style="grid-column:2;grid-row:1;display:flex;justify-content:center;align-items:center">
+    <div class="player-panel${currentIdx===2&&phase==='playing'?' current':''}" style="min-width:500px;min-height:70px;padding:4px 10px">
       <div class="player-name">${p2.name}${p2.isDealer?'<span class="dealer-tag">庄</span>':''} <span class="score">${p2.score}分</span></div>
       <div class="meld-area">
         ${p2.melds.length?p2.melds.map(m=>`<span class="meld-group">${m.tiles.map(t=>tileFaceHTML(t,false,true)).join('')}<span>${m.type==='chi'?'吃':m.type==='peng'?'碰':'杠'}</span></span>`).join(''):''}
       </div>
-      <div class="hand" style="min-width:480px">${p2HandHtml}</div>
+      <div class="hand" style="min-width:480px;margin-top:2px">${p2HandHtml}</div>
     </div>
   </div>`;
 
   // 右玩家(东家) - 跨两行
   const p1=players[1];
   const p1HandHtml=isEnded?(p1.hand.map(t=>`<span class="${t.id===huTileId?'hu-tile-enlarge':''}">${tileFaceHTML(t,false,true)}</span>`).join('')+(winnerIdx===1&&huTile?`<span class="hu-tile-enlarge">${tileFaceHTML(huTile,false,true)}</span>`:'')):p1.hand.map(()=>tileBackHTML()).join('');
-  html+=`<div style="grid-column:3;grid-row:1/3;display:flex;align-items:flex-start;justify-content:center">
-    <div class="player-panel side${currentIdx===1&&phase==='playing'?' current':''}">
+  html+=`<div style="grid-column:3;grid-row:2;display:flex;align-items:center;justify-content:center">
+    <div class="player-panel side${currentIdx===1&&phase==='playing'?' current':''}" style="min-height:180px">
       <div class="player-name">${p1.name}${p1.isDealer?'<span class="dealer-tag">庄</span>':''} <span class="score">${p1.score}分</span></div>
       <div class="meld-area">
         ${p1.melds.length?p1.melds.map(m=>`<span class="meld-group">${m.tiles.map(t=>tileFaceHTML(t,false,true)).join('')}<span>${m.type==='chi'?'吃':m.type==='peng'?'碰':'杠'}</span></span>`).join(''):''}
@@ -1001,7 +1136,7 @@ function render(){
   </div>`;
 
   // 中央区域
-  html+=`<div style="grid-column:2;grid-row:2;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:200px">`;
+  html+=`<div style="grid-column:2;grid-row:2;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:220px">`;
   html+=`<div class="center-panel">`;
 
   // 集中显示所有弃牌（按时间顺序，不分家）
@@ -1028,6 +1163,7 @@ function render(){
     html+=`<div class="action-row">`;
     if(canSelfHu) html+=`<button class="btn btn-danger" onclick="humanSelfHu()">自摸</button>`;
     if(canHiddenGang) html+=`<button class="btn btn-info" onclick="humanHiddenGang()">暗杠</button>`;
+    if(findGangFromPeng(state.players[0].hand,state.players[0].melds)) html+=`<button class="btn btn-info" onclick="humanGangFromPeng()">补杠</button>`;
     html+=`</div>`;
   }
   html+=`</div></div>`;
