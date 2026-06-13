@@ -1111,7 +1111,7 @@ function render(){
   // 上方玩家(南家)
   const p2=players[2];
   const p2HandHtml=isEnded?(p2.hand.map(t=>`<span class="${t.id===huTileId?'hu-tile-enlarge':''}">${tileFaceHTML(t,false,true)}</span>`).join('')+(winnerIdx===2&&huTile?`<span class="hu-tile-enlarge">${tileFaceHTML(huTile,false,true)}</span>`:'')):p2.hand.map(()=>tileBackHTML(true)).join('');
-  html+=`<div style="grid-column:2;grid-row:1;display:flex;justify-content:center;align-items:flex-start;padding-top:4px">
+  
     html+=`<div style="grid-column:2;grid-row:1;display:flex;justify-content:center;align-items:flex-start;padding-top:6px">
     <div class="player-panel${currentIdx===2&&phase==='playing'?' current':''}" style="width:520px;height:auto;padding:4px 10px;box-sizing:border-box">
       <div class="meld-area" style="min-height:12px;margin:2px 0">
