@@ -1084,7 +1084,7 @@ function render(){
     </div>
   </div>`;
 
-  html+=`<div style="display:grid;grid-template-columns:1fr 3fr 1fr;grid-template-rows:100px 230px 200px;gap:10px;width:100%;max-width:1200px">`;
+  html+=`<div style="display:grid;grid-template-columns:1fr 3fr 1fr;grid-template-rows:160px 230px 200px;gap:10px;width:100%;max-width:1200px">`;
   // 游戏结束时所有玩家明牌
   const isEnded=phase==='ended';
   // 获取胡牌的牌（用于在赢家手牌中放大显示）
@@ -1113,7 +1113,7 @@ function render(){
   const p2HandHtml=isEnded?(p2.hand.map(t=>`<span class="${t.id===huTileId?'hu-tile-enlarge':''}">${tileFaceHTML(t,false,true)}</span>`).join('')+(winnerIdx===2&&huTile?`<span class="hu-tile-enlarge">${tileFaceHTML(huTile,false,true)}</span>`:'')):p2.hand.map(()=>tileBackHTML(true)).join('');
   
     html+=`<div style="grid-column:2;grid-row:1;display:flex;justify-content:center;align-items:flex-start;padding-top:6px">
-    <div class="player-panel${currentIdx===2&&phase==='playing'?' current':''}" style="width:500px;height:auto;padding:4px 10px;box-sizing:border-box">
+    <div class="player-panel${currentIdx===2&&phase==='playing'?' current':''}" style="width:560px;height:auto;padding:4px 10px;box-sizing:border-box">
       <div class="meld-area" style="min-height:12px;margin:2px 0">
         ${p2.melds.length?p2.melds.map(m=>`<span class="meld-group">${m.tiles.map(t=>tileFaceHTML(t,false,true)).join('')}<span>${m.type==='chi'?'吃':m.type==='peng'?'碰':'杠'}</span></span>`).join(''):''}
       </div>
